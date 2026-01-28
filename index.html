@@ -350,6 +350,11 @@
     <footer>Made with <i class="ri-heart-fill" style="color: #e53935;"></i> + <i class="ri-robot-2-fill" style="font-size: 1.2em; color: #43a047;"></i></footer>
   </main>
 
+  <!-- Pirsch Analytics (privacy-first, no cookies) -->
+  <script defer src="https://api.pirsch.io/pa.js"
+    id="pianjs"
+    data-code="5gVM2g8OKtCEM4Aqv630bliyI9Bv5GUs"></script>
+
   <script>
     const main = document.getElementById('main');
     const toggle = document.getElementById('theme-toggle');
@@ -384,6 +389,20 @@
     toggle.addEventListener('click', () => {
       isDark = !isDark;
       updateTheme();
+      // Track theme toggle
+      if (window.pirsch) {
+        pirsch('Theme Toggle', { meta: { theme: isDark ? 'dark' : 'light' } });
+      }
+    });
+
+    // Track link clicks
+    document.querySelectorAll('.box').forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.pirsch) {
+          const label = link.querySelector('.box-label')?.textContent || 'Unknown';
+          pirsch('Link Click', { meta: { link: label } });
+        }
+      });
     });
   </script>
 </body>
