@@ -323,12 +323,12 @@
           </span>
           <span class="box-icon"><i class="ri-file-text-line"></i></span>
         </a>
-        <a href="#" class="box tall" target="_blank" rel="noopener noreferrer">
+        <a href="https://bloodhound.mynkv.ca" class="box wide" target="_blank" rel="noopener noreferrer">
           <span class="box-content">
-            <span class="box-label">PROJECTS</span>
-            <span class="box-sub">things i made</span>
+            <span class="box-label">BLOODHOUND</span>
+            <span class="box-sub">on your t(r)ail</span>
           </span>
-          <span class="box-arrow">→</span>
+          <span class="box-icon"><i class="ri-bar-chart-box-line"></i></span>
         </a>
         <a href="#" class="box" target="_blank" rel="noopener noreferrer">
           <span class="box-content">
@@ -350,10 +350,7 @@
     <footer>Made with <i class="ri-heart-fill" style="color: #e53935;"></i> + <i class="ri-robot-2-fill" style="font-size: 1.2em; color: #43a047;"></i></footer>
   </main>
 
-  <!-- Pirsch Analytics (privacy-first, no cookies) -->
-  <script defer src="https://api.pirsch.io/pa.js"
-    id="pianjs"
-    data-code="5gVM2g8OKtCEM4Aqv630bliyI9Bv5GUs"></script>
+  <script defer src="https://bloodhound.mynkv.ca/api/bloodhound" data-site="self"></script>
 
   <script>
     const main = document.getElementById('main');
@@ -390,17 +387,17 @@
       isDark = !isDark;
       updateTheme();
       // Track theme toggle
-      if (window.pirsch) {
-        pirsch('Theme Toggle', { meta: { theme: isDark ? 'dark' : 'light' } });
+      if (window.bloodhound) {
+        bloodhound.track('theme_toggle', { theme: isDark ? 'dark' : 'light' });
       }
     });
 
     // Track link clicks
     document.querySelectorAll('.box').forEach(link => {
       link.addEventListener('click', () => {
-        if (window.pirsch) {
+        if (window.bloodhound) {
           const label = link.querySelector('.box-label')?.textContent || 'Unknown';
-          pirsch('Link Click', { meta: { link: label } });
+          bloodhound.track('link_click', { link: label });
         }
       });
     });
