@@ -15,16 +15,18 @@
     body {
       margin: 0;
       padding: 0;
-    }
-
-    main {
       --bg: #000000;
       --surface: #000000;
       --text: #ffffff;
       --accent: #2d6bff;
       --border: #ffffff;
-
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    main {
+      flex: 1;
       padding: 2rem;
       display: flex;
       align-items: center;
@@ -35,7 +37,7 @@
       transition: all 0.15s ease;
     }
 
-    main.light {
+    body.light {
       --bg: #ffffff;
       --surface: #ffffff;
       --text: #000000;
@@ -70,8 +72,8 @@
     .theme-toggle .icon-sun { display: none; }
     .theme-toggle .icon-moon { display: block; }
 
-    main:not(.light) .theme-toggle .icon-sun { display: block; }
-    main:not(.light) .theme-toggle .icon-moon { display: none; }
+    body:not(.light) .theme-toggle .icon-sun { display: block; }
+    body:not(.light) .theme-toggle .icon-moon { display: none; }
 
     .container {
       max-width: 600px;
@@ -246,10 +248,9 @@
     }
 
     footer {
-      position: fixed;
-      bottom: 1.5rem;
-      left: 50%;
-      transform: translateX(-50%);
+      width: 100%;
+      justify-content: center;
+      padding: 1.5rem 0;
       font-family: 'JetBrains Mono', monospace;
       font-size: 0.9rem;
       font-weight: 700;
@@ -258,6 +259,7 @@
       align-items: center;
       gap: 0.5rem;
       color: var(--text);
+      background: var(--bg);
     }
 
     @media (max-width: 500px) {
@@ -347,8 +349,9 @@
       </div>
     </div>
 
-    <footer>Made with <i class="ri-heart-fill" style="color: #e53935;"></i> + <i class="ri-robot-2-fill" style="font-size: 1.2em; color: #43a047;"></i></footer>
   </main>
+
+  <footer>Made with <i class="ri-heart-fill" style="color: #e53935;"></i> + <i class="ri-robot-2-fill" style="font-size: 1.2em; color: #43a047;"></i></footer>
 
   <script defer src="https://bloodhound.mynkv.ca/api/bloodhound" data-site="mynkv.ca"></script>
 
@@ -377,7 +380,7 @@
     let isDark = savedTheme ? savedTheme === 'dark' : false;
 
     function updateTheme() {
-      main.classList.toggle('light', !isDark);
+      document.body.classList.toggle('light', !isDark);
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
     }
 
