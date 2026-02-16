@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>mayank_vachher</title>
-  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="icon" type="image/svg+xml" href="https://favicons.mynkv.ca/www.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -332,6 +332,13 @@
           </span>
           <span class="box-icon" style="opacity: 1; position: static; align-self: stretch; display: flex; align-items: center;"><img id="bloodhound-icon" alt="bloodhound" style="border-radius: 4px; height: 100%; aspect-ratio: 1; object-fit: contain;"></span>
         </a>
+        <a href="https://favicons.mynkv.ca" class="box wide" target="_blank" rel="noopener noreferrer">
+          <span class="box-content">
+            <span class="box-label">FAVICON FARM</span>
+            <span class="box-sub">hand-tuned SVGs</span>
+          </span>
+          <span class="box-icon" style="opacity: 1; position: static; align-self: stretch; display: flex; align-items: center;"><img id="favicon-farm-icon" alt="favicon farm" style="border-radius: 4px; height: 100%; aspect-ratio: 1; object-fit: contain;"></span>
+        </a>
         <a href="#" class="box" target="_blank" rel="noopener noreferrer">
           <span class="box-content">
             <span class="box-label">WHATEVER</span>
@@ -375,8 +382,9 @@
     ];
     taglineEl.textContent = taglines[Math.floor(Math.random() * taglines.length)];
 
-    // Cache-bust iconhorse icons
-    document.getElementById('bloodhound-icon').src = `https://icon.horse/icon/bloodhound.mynkv.ca?ts=${Date.now()}`;
+    // Set favicon-farm icons
+    document.getElementById('bloodhound-icon').src = 'https://favicons.mynkv.ca/bloodhound.svg';
+    document.getElementById('favicon-farm-icon').src = 'https://favicons.mynkv.ca/favicon-farm.svg';
 
     // Check for saved preference, default to light
     const savedTheme = localStorage.getItem('theme');
