@@ -277,6 +277,29 @@
         grid-row: span 2;
       }
     }
+
+    @media (max-width: 320px) {
+      h1 {
+        font-size: clamp(3rem, 16vw, 4rem);
+        padding-right: 2.5rem;
+      }
+      .theme-toggle {
+        width: 32px;
+        height: 32px;
+        font-size: 1rem;
+        top: 1rem;
+        right: 1rem;
+      }
+      .box {
+        font-size: 0.75rem;
+        padding: 0.75rem;
+      }
+      .box-icon {
+        font-size: 0.9rem;
+        top: 0.5rem;
+        right: 0.5rem;
+      }
+    }
   </style>
 </head>
 <body>
