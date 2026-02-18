@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [master]
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   ci:
     name: CI
@@ -26,6 +30,8 @@ jobs:
     permissions:
       contents: read
       deployments: write
+    env:
+      PRODUCTION_URL: https://mynkv.ca
     steps:
       - uses: actions/checkout@v4
 
@@ -35,7 +41,8 @@ jobs:
         with:
           token: ${{ github.token }}
           environment: production
-          environment-url: https://mynkv.ca
+          initial-status: in_progress
+          environment-url: ${{ env.PRODUCTION_URL }}
 
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
@@ -49,25 +56,19 @@ jobs:
 
       - name: Health check
         run: |
-          sleep 5
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://mynkv.ca)
-          if [ "$STATUS" != "200" ]; then
-            echo "Health check failed with status $STATUS"
-            exit 1
-          fi
+          curl --fail --retry 5 --retry-delay 2 --silent --show-error ${{ env.PRODUCTION_URL }} > /dev/null
           echo "Health check passed ✅"
 
       - name: Update deployment status (success)
-        if: success()
         uses: chrnorm/deployment-status@v2
         with:
           token: ${{ github.token }}
           deployment-id: ${{ steps.deployment.outputs.deployment_id }}
           state: success
-          environment-url: https://mynkv.ca
+          environment-url: ${{ env.PRODUCTION_URL }}
 
       - name: Update deployment status (failure)
-        if: failure()
+        if: failure() && steps.deployment.outputs.deployment_id
         uses: chrnorm/deployment-status@v2
         with:
           token: ${{ github.token }}
