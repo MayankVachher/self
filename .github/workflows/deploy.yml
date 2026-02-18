@@ -1,13 +1,31 @@
-name: Deploy to VM
+name: CI / CD
 
 on:
   push:
     branches: [master]
+  pull_request:
+    branches: [master]
 
 jobs:
-  deploy:
+  ci:
+    name: CI
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate HTML
+        uses: anishathalye/proof-html@v2
+        with:
+          directory: .
+
+  deploy:
+    name: Deploy
+    needs: ci
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
@@ -17,3 +35,13 @@ jobs:
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
             git pull origin master
+
+      - name: Health check
+        run: |
+          sleep 5
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.DEPLOY_HOST }})
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed with status $STATUS"
+            exit 1
+          fi
+          echo "Health check passed ✅"
