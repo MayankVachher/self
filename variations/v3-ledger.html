@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lume — The Ledger</title>
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Recursive:wght,CASL,MONO@400,0.5,1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#1a1410;--bg-surface:#231e18;--bg-elevated:#2e2720;
+  --text-primary:#f5f0e8;--text-secondary:#c4b8a8;--text-muted:#9a8e80;
+  --accent-rose:#c4867a;--accent-gold:#c4a24e;--border:#3a322a;
+}
+html,body{height:100%;background:var(--bg-deep);color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0.03;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.ledger{max-width:1200px;margin:0 auto;padding:60px 40px 140px;display:grid;grid-template-columns:1fr 48px 1fr;min-height:100vh}
+
+/* Center gutter */
+.gutter{position:relative}
+.gutter::before{content:'';position:absolute;top:0;bottom:0;left:50%;width:1px;background:rgba(196,162,78,0.12)}
+@keyframes gutter-pulse{0%,100%{opacity:0.12}50%{opacity:0.25}}
+.gutter.thinking::before{animation:gutter-pulse 2s ease-in-out infinite}
+
+/* Agent dots in right margin */
+.agent-dots{position:fixed;right:32px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:16px;z-index:10}
+@keyframes breathe{0%,100%{opacity:0.3;transform:scale(1)}50%{opacity:0.9;transform:scale(1.15)}}
+.agent-dot{width:7px;height:7px;border-radius:50%}
+.agent-dot.rose{background:var(--accent-rose);animation:breathe 3s ease-in-out infinite}
+.agent-dot.amber{background:var(--accent-gold);animation:breathe 3s ease-in-out 0.7s infinite}
+.agent-dot.blue{background:#7a9ec4;animation:breathe 3s ease-in-out 1.4s infinite}
+
+/* Messages */
+.speaker-label{font-family:'Cabinet Grotesk',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text-muted);margin-bottom:4px}
+.msg-left{grid-column:1;text-align:right;padding-right:24px;margin-bottom:24px;font-weight:500;font-size:15px;line-height:1.7}
+.msg-right{grid-column:3;padding-left:24px;border-left:3px solid rgba(196,134,122,0.2);margin-bottom:24px;font-weight:400;font-size:15px;line-height:1.7}
+.msg-right code,.msg-left code{font-family:'Recursive',monospace;font-size:13px;color:var(--accent-gold);background:rgba(196,162,78,0.12);padding:2px 5px;border-radius:3px}
+.spacer{grid-column:2}
+
+/* Work cards span full width */
+.work-full{grid-column:1/-1;max-width:600px;margin:12px auto 24px;width:100%;border-left:3px solid var(--accent-gold);background:rgba(46,39,32,0.4);border-radius:4px;padding:10px 14px;font-family:'Recursive',monospace;font-size:12px;color:var(--text-muted);line-height:1.6}
+.work-full summary{cursor:pointer;font-size:13px;color:var(--text-secondary);list-style:none}
+.work-full summary::-webkit-details-marker{display:none}
+.work-full pre{margin-top:8px;white-space:pre-wrap}
+.diff-add{color:#7dba7d}
+
+/* Slide animations */
+@keyframes slide-left{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:translateX(0)}}
+@keyframes slide-right{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+.msg-left{animation:slide-left 250ms ease-out}
+.msg-right{animation:slide-right 250ms ease-out}
+
+/* Input */
+.input-bar{position:fixed;bottom:0;left:0;right:0;padding:20px 0 32px;background:linear-gradient(transparent,var(--bg-deep) 30%)}
+.input-inner{max-width:1200px;margin:0 auto;padding:0 40px;display:grid;grid-template-columns:1fr 48px 1fr}
+.input-field{grid-column:1;text-align:right;background:none;border:none;border-bottom:1px solid rgba(196,162,78,0.2);outline:none;color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:500;padding:8px 24px 8px 0;caret-color:var(--accent-gold);resize:none}
+.input-field::placeholder{color:var(--text-muted);opacity:0.3}
+.input-field:focus{border-bottom-color:rgba(196,162,78,0.5)}
+</style>
+</head>
+<body>
+
+<div class="agent-dots">
+  <div class="agent-dot rose"></div>
+  <div class="agent-dot amber"></div>
+  <div class="agent-dot blue"></div>
+</div>
+
+<div class="ledger" id="ledger">
+
+  <div class="msg-left">
+    <div class="speaker-label" style="color:var(--accent-gold)">You</div>
+    what's the status on the auth refactor?
+  </div>
+  <div class="spacer"></div>
+  <div></div>
+
+  <div></div>
+  <div class="spacer"></div>
+  <div class="msg-right">
+    <div class="speaker-label" style="color:var(--accent-rose)">Mikki</div>
+    Done. Pushed to the branch 20 minutes ago. Token refresh was racing with the session check — fixed it with a queue.
+  </div>
+
+  <div></div>
+  <div class="spacer"></div>
+  <div class="msg-right" style="border-left-color:rgba(196,134,122,0.1);margin-top:-16px">
+    Want me to walk you through the changes?
+  </div>
+
+  <div class="msg-left">
+    <div class="speaker-label" style="color:var(--accent-gold)">You</div>
+    walk me through what you changed
+  </div>
+  <div class="spacer"></div>
+  <div></div>
+
+  <div></div>
+  <div class="spacer"></div>
+  <div class="msg-right">
+    <div class="speaker-label" style="color:var(--accent-rose)">Mikki</div>
+    <p>The core problem was a race condition between the token refresh cycle and the session validation middleware. When a user's access token expired, two things happened simultaneously: the refresh interceptor fired off a request to <code>/auth/refresh</code>, and the session check middleware tried to validate the now-expired token. About 15% of the time, the session check would fail before the refresh completed, killing the session entirely.</p>
+    <br>
+    <p>The fix is a promise-based queue. I added a <code>RefreshQueue</code> class in <code>src/auth/refresh.ts</code> that acts as a gatekeeper. When the first request detects an expired token, it acquires the lock and starts the refresh. Every subsequent request that hits the expired token during that window just awaits the same promise. Once the refresh resolves, all queued requests replay with the new token.</p>
+    <br>
+    <p>The session middleware now checks the queue state before validating. If a refresh is in-flight, it waits for resolution rather than immediately rejecting. This required moving session validation into an async wrapper so it can yield without blocking the request pipeline.</p>
+    <br>
+    <p>I also added a <code>maxRetries</code> config (defaulting to 2) so we don't loop forever if the refresh token itself is expired. After max retries, it clears the session cleanly and redirects to login with a <code>reason=session_expired</code> param so the UI can show the right message.</p>
+    <br>
+    <p>The migration is minimal: one new column on the sessions table (<code>refresh_lock_id</code>) for distributed environments where multiple server instances need to coordinate refreshes.</p>
+  </div>
+
+  <details class="work-full">
+    <summary>✓ Ran build · 4.2s</summary>
+    <pre>$ pnpm build
+✓ Compiled successfully in 4.2s
+✓ 47 modules transformed
+✓ dist/index.js     12.4 kB │ gzip: 4.1 kB
+✓ dist/auth.js       3.8 kB │ gzip: 1.6 kB</pre>
+  </details>
+
+  <details class="work-full">
+    <summary>Edited src/auth/refresh.ts</summary>
+    <pre><span class="diff-add">+ export class RefreshQueue {
++   private pending: Promise&lt;Token&gt; | null = null;
++   private retries = 0;
++
++   async acquire(refreshFn: () =&gt; Promise&lt;Token&gt;) {
++     if (this.pending) return this.pending;
++     this.pending = refreshFn().finally(() =&gt; {
++       this.pending = null;
++     });
++     return this.pending;
++   }
++ }</span></pre>
+  </details>
+
+  <div></div>
+  <div class="spacer"></div>
+  <div class="msg-right">
+    <div class="speaker-label" style="color:var(--accent-rose)">Mikki</div>
+    All tests pass. Want me to open the PR?
+  </div>
+
+  <div class="msg-left">
+    <div class="speaker-label" style="color:var(--accent-gold)">You</div>
+    yes, include the migration notes
+  </div>
+  <div class="spacer"></div>
+  <div></div>
+
+  <details class="work-full">
+    <summary>Created PR #47 — Fix token refresh race condition</summary>
+    <pre>PR #47: Fix token refresh race condition
+
+- Add RefreshQueue class for promise-based locking
+- Update session middleware to await pending refreshes
+- Add refresh_lock_id migration for distributed envs
+- Add maxRetries config (default: 2)
+
+Migration: npx prisma migrate deploy</pre>
+  </details>
+
+</div>
+
+<div class="input-bar">
+  <div class="input-inner">
+    <textarea class="input-field" rows="1" placeholder="speak…" id="input"></textarea>
+  </div>
+</div>
+
+<script>
+const input = document.getElementById('input');
+input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; });
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (input.value.trim()) {
+      const ledger = document.getElementById('ledger');
+      const left = document.createElement('div');
+      left.className = 'msg-left';
+      left.innerHTML = `<div class="speaker-label" style="color:var(--accent-gold)">You</div>${input.value.replace(/</g,'&lt;')}`;
+      const spacer = document.createElement('div');
+      spacer.className = 'spacer';
+      const empty = document.createElement('div');
+      ledger.append(left, spacer, empty);
+      input.value = '';input.style.height='auto';
+      window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+    }
+  }
+});
+</script>
+</body>
+</html>

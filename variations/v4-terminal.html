@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lume — The Terminal</title>
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Recursive:wght,CASL,MONO@400,0.5,1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#1e1610;--bg-surface:#231e18;--bg-elevated:#2e2720;
+  --text-primary:#f5f0e8;--text-secondary:#c4b8a8;--text-muted:#9a8e80;
+  --accent-rose:#c4867a;--accent-gold:#c4a24e;--border:#3a322a;
+}
+html,body{height:100%;background:var(--bg-deep);color:var(--text-primary);font-family:'Recursive',monospace}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0.03;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+/* Scanlines */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9998;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.03) 2px,rgba(0,0,0,0.03) 4px);
+  animation:scanline-drift 60s linear infinite;
+}
+@keyframes scanline-drift{from{background-position:0 0}to{background-position:0 -200px}}
+
+/* Status bar */
+.status-bar{position:fixed;top:0;left:0;right:0;height:24px;background:var(--bg-elevated);z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 32px;font-size:11px;color:var(--text-muted)}
+.status-dots{display:flex;gap:8px;align-items:center}
+@keyframes breathe{0%,100%{opacity:0.3}50%{opacity:0.9}}
+.sd{width:5px;height:5px;border-radius:50%}
+.sd.r{background:var(--accent-rose);animation:breathe 3s infinite}
+.sd.a{background:var(--accent-gold);animation:breathe 3s 0.7s infinite}
+.sd.b{background:#7a9ec4;animation:breathe 3s 1.4s infinite}
+
+.terminal{max-width:760px;margin:0 auto;padding:56px 48px 100px 48px}
+
+/* Lines */
+.line{margin-bottom:12px;opacity:0;animation:line-in 150ms ease-out forwards}
+@keyframes line-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.line:nth-child(1){animation-delay:0ms}
+.line:nth-child(2){animation-delay:50ms}
+.line:nth-child(3){animation-delay:100ms}
+.line:nth-child(4){animation-delay:150ms}
+.line:nth-child(5){animation-delay:200ms}
+.line:nth-child(6){animation-delay:250ms}
+.line:nth-child(7){animation-delay:300ms}
+.line:nth-child(8){animation-delay:350ms}
+.line:nth-child(9){animation-delay:400ms}
+.line:nth-child(10){animation-delay:450ms}
+.line:nth-child(11){animation-delay:500ms}
+.line:nth-child(12){animation-delay:550ms}
+.line:nth-child(13){animation-delay:600ms}
+.line:nth-child(14){animation-delay:650ms}
+
+.prompt{color:var(--accent-rose)}
+.user-line{font-size:15px;color:var(--accent-gold)}
+.assistant-line{font-size:14px;color:var(--text-primary)}
+.continuation{padding-left:16px}
+.assistant-line code{background:rgba(196,162,78,0.06);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-size:13px}
+
+/* Work cards */
+.work-line{margin:16px 0;padding-left:20px;font-size:13px;color:var(--text-muted);line-height:1.6}
+.work-line summary{cursor:pointer;list-style:none}
+.work-line summary::-webkit-details-marker{display:none}
+.work-line pre{margin-top:6px;white-space:pre-wrap}
+.diff-add{color:#7dba7d}
+
+/* Input */
+.input-bar{position:fixed;bottom:0;left:0;right:0;padding:16px 0 28px;background:linear-gradient(transparent,var(--bg-deep) 30%)}
+.input-inner{max-width:760px;margin:0 auto;padding:0 48px;display:flex;align-items:center;gap:8px}
+.input-prompt{color:var(--accent-rose);font-size:15px;flex-shrink:0}
+.term-input{flex:1;background:none;border:none;outline:none;color:var(--accent-gold);font-family:'Recursive',monospace;font-size:15px;caret-color:var(--accent-gold)}
+.term-input::placeholder{color:var(--text-muted);opacity:0.2}
+@keyframes blink-cursor{0%,50%{border-right-color:var(--accent-gold)}51%,100%{border-right-color:transparent}}
+</style>
+</head>
+<body>
+
+<div class="status-bar">
+  <span>lume://mikki</span>
+  <div class="status-dots"><div class="sd r"></div><div class="sd a"></div><div class="sd b"></div></div>
+  <span id="clock"></span>
+</div>
+
+<div class="terminal" id="terminal">
+
+  <div class="line">
+    <span class="prompt">› </span><span class="user-line">what's the status on the auth refactor?</span>
+  </div>
+
+  <div class="line">
+    <span class="prompt">· </span><span class="assistant-line">Done. Pushed to the branch 20 minutes ago. Token refresh was racing with the session check — fixed it with a queue.</span>
+  </div>
+
+  <div class="line">
+    <span class="prompt">· </span><span class="assistant-line">Want me to walk you through the changes?</span>
+  </div>
+
+  <div class="line">
+    <span class="prompt">› </span><span class="user-line">walk me through what you changed</span>
+  </div>
+
+  <div class="line">
+    <span class="prompt">· </span><span class="assistant-line">The core problem was a race condition between the token refresh cycle and the session validation middleware. When a user's access token expired, two things happened simultaneously: the refresh interceptor fired off a request to <code>/auth/refresh</code>, and the session check middleware tried to validate the now-expired token. About 15% of the time, the session check would fail before the refresh completed, killing the session entirely.</span>
+  </div>
+
+  <div class="line continuation">
+    <span class="assistant-line">The fix is a promise-based queue. I added a <code>RefreshQueue</code> class in <code>src/auth/refresh.ts</code> that acts as a gatekeeper. When the first request detects an expired token, it acquires the lock and starts the refresh. Every subsequent request that hits the expired token during that window just awaits the same promise. Once the refresh resolves, all queued requests replay with the new token.</span>
+  </div>
+
+  <div class="line continuation">
+    <span class="assistant-line">The session middleware now checks the queue state before validating. If a refresh is in-flight, it waits for resolution rather than immediately rejecting. This required moving session validation into an async wrapper so it can yield without blocking the request pipeline.</span>
+  </div>
+
+  <div class="line continuation">
+    <span class="assistant-line">I also added a <code>maxRetries</code> config (defaulting to 2) so we don't loop forever if the refresh token itself is expired. After max retries, it clears the session cleanly and redirects to login with a <code>reason=session_expired</code> param so the UI can show the right message.</span>
+  </div>
+
+  <div class="line continuation">
+    <span class="assistant-line">The migration is minimal: one new column on the sessions table (<code>refresh_lock_id</code>) for distributed environments where multiple server instances need to coordinate refreshes.</span>
+  </div>
+
+  <details class="work-line line">
+    <summary><span class="prompt">$ </span>pnpm build — ✓ 4.2s</summary>
+    <pre>✓ Compiled successfully in 4.2s
+✓ 47 modules transformed
+✓ dist/index.js     12.4 kB │ gzip: 4.1 kB
+✓ dist/auth.js       3.8 kB │ gzip: 1.6 kB</pre>
+  </details>
+
+  <details class="work-line line">
+    <summary><span class="prompt">$ </span>edit src/auth/refresh.ts</summary>
+    <pre><span class="diff-add">+ export class RefreshQueue {
++   private pending: Promise&lt;Token&gt; | null = null;
++   private retries = 0;
++
++   async acquire(refreshFn: () =&gt; Promise&lt;Token&gt;) {
++     if (this.pending) return this.pending;
++     this.pending = refreshFn().finally(() =&gt; {
++       this.pending = null;
++     });
++     return this.pending;
++   }
++ }</span></pre>
+  </details>
+
+  <div class="line">
+    <span class="prompt">· </span><span class="assistant-line">All tests pass. Want me to open the PR?</span>
+  </div>
+
+  <div class="line">
+    <span class="prompt">› </span><span class="user-line">yes, include the migration notes</span>
+  </div>
+
+  <details class="work-line line">
+    <summary><span class="prompt">$ </span>gh pr create #47 — Fix token refresh race condition</summary>
+    <pre>PR #47: Fix token refresh race condition
+
+- Add RefreshQueue class for promise-based locking
+- Update session middleware to await pending refreshes
+- Add refresh_lock_id migration for distributed envs
+- Add maxRetries config (default: 2)
+
+Migration: npx prisma migrate deploy</pre>
+  </details>
+
+</div>
+
+<div class="input-bar">
+  <div class="input-inner">
+    <span class="input-prompt">›</span>
+    <input class="term-input" type="text" placeholder="" id="input" autofocus>
+  </div>
+</div>
+
+<script>
+// Clock
+function updateClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',second:'2-digit',hour12:true})}
+updateClock();setInterval(updateClock,1000);
+
+const input = document.getElementById('input');
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (input.value.trim()) {
+      const term = document.getElementById('terminal');
+      const div = document.createElement('div');
+      div.className = 'line';
+      div.innerHTML = `<span class="prompt">› </span><span class="user-line">${input.value.replace(/</g,'&lt;')}</span>`;
+      div.style.opacity='0';
+      term.appendChild(div);
+      requestAnimationFrame(()=>{div.style.animation='line-in 150ms ease-out forwards'});
+      input.value='';
+      window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+    }
+  }
+});
+</script>
+</body>
+</html>

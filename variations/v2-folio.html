@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lume — The Folio</title>
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Recursive:wght,CASL,MONO@400,0.5,1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#1a1410;--bg-surface:#231e18;--bg-elevated:#2e2720;
+  --text-primary:#f5f0e8;--text-secondary:#c4b8a8;--text-muted:#9a8e80;
+  --accent-rose:#c4867a;--accent-gold:#c4a24e;--border:#3a322a;
+}
+html{height:100%;background:var(--bg-deep);color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;line-height:1.8}
+body{min-height:100%;padding:80px 0 160px;background:var(--bg-deep)}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0.03;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.folio{max-width:680px;margin:0 auto;padding:0 40px;position:relative}
+
+/* Speaker marginal notes */
+.speaker-change{position:relative;margin-top:40px}
+.speaker-change:first-child{margin-top:0}
+.speaker-change::before{content:'';display:block;width:60px;height:1px;background:rgba(196,134,122,0.08);margin:0 auto 40px}
+.speaker-change:first-child::before{display:none}
+.marginal{position:absolute;left:-40px;top:0;font-family:'Cabinet Grotesk',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)}
+
+.same-speaker{margin-top:8px}
+
+/* Text colors */
+.user-text{color:var(--text-primary)}
+.assistant-text{color:rgba(196,134,122,0.85)}
+
+/* Long response paragraphs */
+.assistant-text p+p{text-indent:1.5em}
+
+/* Timestamps */
+.para{position:relative}
+.para .ts{position:absolute;right:-80px;top:0;font-size:11px;color:var(--text-muted);opacity:0;transition:opacity 200ms;white-space:nowrap}
+.para:hover .ts{opacity:0.4}
+
+/* Work cards */
+.work-block{margin:20px 0;margin-left:24px;border-left:2px solid var(--border);padding-left:16px;font-family:'Recursive',monospace;font-size:12px;line-height:1.6;color:var(--text-muted)}
+.work-block summary{cursor:pointer;font-size:13px;color:var(--text-secondary);list-style:none}
+.work-block summary::-webkit-details-marker{display:none}
+.work-block pre{margin-top:8px;white-space:pre-wrap}
+.diff-add{color:#7dba7d}
+
+/* Input */
+.input-area{position:fixed;bottom:0;left:0;right:0;padding:24px 0 40px;background:linear-gradient(transparent,var(--bg-deep) 30%)}
+.input-wrap{max-width:680px;margin:0 auto;padding:0 40px;position:relative}
+.folio-input{background:none;border:none;outline:none;color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;font-size:17px;line-height:1.8;width:100%;caret-color:var(--accent-gold);resize:none}
+.folio-input::placeholder{font-style:italic;opacity:0.2;color:var(--text-muted)}
+.input-underline{position:absolute;bottom:-2px;left:40px;right:40px;height:1px;background:var(--accent-gold);opacity:0;transition:opacity 300ms}
+.folio-input:focus~.input-underline{opacity:0.15}
+</style>
+</head>
+<body>
+<div class="folio">
+
+  <div class="speaker-change para">
+    <span class="marginal">Y</span>
+    <span class="ts">2:31 PM</span>
+    <div class="user-text">what's the status on the auth refactor?</div>
+  </div>
+
+  <div class="speaker-change para">
+    <span class="marginal">M</span>
+    <span class="ts">2:31 PM</span>
+    <div class="assistant-text">Done. Pushed to the branch 20 minutes ago. Token refresh was racing with the session check — fixed it with a queue.</div>
+  </div>
+
+  <div class="same-speaker para">
+    <span class="ts">2:31 PM</span>
+    <div class="assistant-text">Want me to walk you through the changes?</div>
+  </div>
+
+  <div class="speaker-change para">
+    <span class="marginal">Y</span>
+    <span class="ts">2:32 PM</span>
+    <div class="user-text">walk me through what you changed</div>
+  </div>
+
+  <div class="speaker-change para">
+    <span class="marginal">M</span>
+    <span class="ts">2:33 PM</span>
+    <div class="assistant-text">
+      <p>The core problem was a race condition between the token refresh cycle and the session validation middleware. When a user's access token expired, two things happened simultaneously: the refresh interceptor fired off a request to <code>/auth/refresh</code>, and the session check middleware tried to validate the now-expired token. About 15% of the time, the session check would fail before the refresh completed, killing the session entirely.</p>
+      <p>The fix is a promise-based queue. I added a <code>RefreshQueue</code> class in <code>src/auth/refresh.ts</code> that acts as a gatekeeper. When the first request detects an expired token, it acquires the lock and starts the refresh. Every subsequent request that hits the expired token during that window just awaits the same promise. Once the refresh resolves, all queued requests replay with the new token.</p>
+      <p>The session middleware now checks the queue state before validating. If a refresh is in-flight, it waits for resolution rather than immediately rejecting. This required moving session validation into an async wrapper so it can yield without blocking the request pipeline.</p>
+      <p>I also added a <code>maxRetries</code> config (defaulting to 2) so we don't loop forever if the refresh token itself is expired. After max retries, it clears the session cleanly and redirects to login with a <code>reason=session_expired</code> param so the UI can show the right message.</p>
+      <p>The migration is minimal: one new column on the sessions table (<code>refresh_lock_id</code>) for distributed environments where multiple server instances need to coordinate refreshes.</p>
+    </div>
+  </div>
+
+  <details class="work-block">
+    <summary>✓ Ran build · 4.2s</summary>
+    <pre>$ pnpm build
+✓ Compiled successfully in 4.2s
+✓ 47 modules transformed
+✓ dist/index.js     12.4 kB │ gzip: 4.1 kB
+✓ dist/auth.js       3.8 kB │ gzip: 1.6 kB</pre>
+  </details>
+
+  <details class="work-block">
+    <summary>Edited src/auth/refresh.ts</summary>
+    <pre><span class="diff-add">+ export class RefreshQueue {
++   private pending: Promise&lt;Token&gt; | null = null;
++   private retries = 0;
++
++   async acquire(refreshFn: () =&gt; Promise&lt;Token&gt;) {
++     if (this.pending) return this.pending;
++     this.pending = refreshFn().finally(() =&gt; {
++       this.pending = null;
++     });
++     return this.pending;
++   }
++ }</span></pre>
+  </details>
+
+  <div class="speaker-change para">
+    <span class="marginal">M</span>
+    <span class="ts">2:34 PM</span>
+    <div class="assistant-text">All tests pass. Want me to open the PR?</div>
+  </div>
+
+  <div class="speaker-change para">
+    <span class="marginal">Y</span>
+    <span class="ts">2:35 PM</span>
+    <div class="user-text">yes, include the migration notes</div>
+  </div>
+
+  <details class="work-block">
+    <summary>Created PR #47 — Fix token refresh race condition</summary>
+    <pre>PR #47: Fix token refresh race condition
+
+- Add RefreshQueue class for promise-based locking
+- Update session middleware to await pending refreshes
+- Add refresh_lock_id migration for distributed envs
+- Add maxRetries config (default: 2)
+
+Migration: npx prisma migrate deploy</pre>
+  </details>
+
+</div>
+
+<div class="input-area">
+  <div class="input-wrap">
+    <textarea class="folio-input" rows="1" placeholder="…" id="input"></textarea>
+    <div class="input-underline"></div>
+  </div>
+</div>
+
+<script>
+const input = document.getElementById('input');
+input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; });
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (input.value.trim()) {
+      const folio = document.querySelector('.folio');
+      const div = document.createElement('div');
+      div.className = 'speaker-change para';
+      div.innerHTML = `<span class="marginal">Y</span><span class="ts">${new Date().toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit',hour12:true})}</span><div class="user-text">${input.value.replace(/</g,'&lt;')}</div>`;
+      div.style.opacity='0';div.style.transform='translateY(6px)';
+      folio.appendChild(div);
+      requestAnimationFrame(()=>{div.style.transition='opacity 250ms,transform 250ms';div.style.opacity='1';div.style.transform='translateY(0)'});
+      input.value='';input.style.height='auto';
+      window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+    }
+  }
+});
+</script>
+</body>
+</html>

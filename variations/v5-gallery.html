@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lume — The Gallery</title>
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Recursive:wght,CASL,MONO@400,0.5,1&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg-deep:#1a1410;--bg-surface:#231e18;--bg-elevated:#2e2720;
+  --text-primary:#f5f0e8;--text-secondary:#c4b8a8;--text-muted:#9a8e80;
+  --accent-rose:#c4867a;--accent-gold:#c4a24e;--border:#3a322a;
+}
+html,body{min-height:100%;background:var(--bg-deep);color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;opacity:0.03;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.gallery{max-width:900px;margin:0 auto;padding:60px 40px 180px}
+
+/* Cards */
+.card{background:rgba(35,30,24,0.6);border:1px solid rgba(58,50,42,0.25);border-radius:8px;padding:20px 24px;margin-bottom:28px;
+  box-shadow:0 2px 12px rgba(10,8,6,0.4),inset 0 1px 0 rgba(245,240,232,0.03);
+  transition:transform 300ms ease,box-shadow 300ms ease;
+  animation:card-enter 300ms ease-out both}
+@keyframes card-enter{from{opacity:0;transform:scale(0.97) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(10,8,6,0.6),inset 0 1px 0 rgba(245,240,232,0.03)}
+
+.card-label{font-family:'Cabinet Grotesk',sans-serif;font-size:11px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text-muted);margin-bottom:6px}
+.card p{font-size:15px;line-height:1.7}
+.card code{font-family:'Recursive',monospace;font-size:13px;color:var(--accent-gold);background:rgba(196,162,78,0.12);padding:2px 5px;border-radius:3px}
+
+/* User cards */
+.card-user{margin-left:auto;margin-right:80px;max-width:500px;border-bottom:2px solid rgba(196,162,78,0.2)}
+/* Short assistant */
+.card-assistant{margin-left:60px;max-width:420px;border-bottom:2px solid rgba(196,134,122,0.2)}
+/* Long assistant */
+.card-assistant-long{margin-left:40px;max-width:700px;border-bottom:2px solid rgba(196,134,122,0.2)}
+/* Work cards */
+.card-work{margin-left:auto;margin-right:auto;max-width:560px;border-bottom:none;border-left:3px solid var(--accent-rose);font-family:'Recursive',monospace;font-size:12px;color:var(--text-muted);line-height:1.6}
+.card-work summary{cursor:pointer;list-style:none;font-size:13px;color:var(--text-secondary)}
+.card-work summary::-webkit-details-marker{display:none}
+.card-work pre{margin-top:8px;white-space:pre-wrap}
+.diff-add{color:#7dba7d}
+
+/* Animation stagger */
+.card:nth-child(1){animation-delay:0ms}
+.card:nth-child(2){animation-delay:60ms}
+.card:nth-child(3){animation-delay:120ms}
+.card:nth-child(4){animation-delay:180ms}
+.card:nth-child(5){animation-delay:240ms}
+.card:nth-child(6){animation-delay:300ms}
+.card:nth-child(7){animation-delay:360ms}
+.card:nth-child(8){animation-delay:420ms}
+.card:nth-child(9){animation-delay:480ms}
+.card:nth-child(10){animation-delay:540ms}
+.card:nth-child(11){animation-delay:600ms}
+
+/* Exhibit labels strip */
+.exhibit-strip{position:fixed;bottom:0;left:0;right:0;height:28px;background:var(--bg-elevated);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;gap:24px;font-size:11px;color:var(--text-muted);z-index:10}
+@keyframes breathe{0%,100%{opacity:0.3}50%{opacity:0.9}}
+.exhibit-dot{width:5px;height:5px;border-radius:50%;display:inline-block;margin-right:6px}
+.exhibit-dot.r{background:var(--accent-rose);animation:breathe 3s infinite}
+.exhibit-dot.a{background:var(--accent-gold);animation:breathe 3s 0.7s infinite}
+.exhibit-dot.b{background:#7a9ec4;animation:breathe 3s 1.4s infinite}
+
+/* Input */
+.input-area{position:fixed;bottom:28px;left:0;right:0;padding:16px 0 16px;background:linear-gradient(transparent,var(--bg-deep) 40%)}
+.input-card{max-width:600px;margin:0 auto;background:rgba(35,30,24,0.6);border:1px solid var(--border);border-radius:8px;padding:12px 20px;transition:border-color 300ms}
+.input-card:focus-within{border-color:rgba(196,162,78,0.5)}
+.gallery-input{width:100%;background:none;border:none;outline:none;color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;caret-color:var(--accent-gold);resize:none}
+.gallery-input::placeholder{color:var(--text-muted);opacity:0.3;font-style:italic}
+</style>
+</head>
+<body>
+
+<div class="gallery" id="gallery">
+
+  <div class="card card-user">
+    <div class="card-label" style="color:var(--accent-gold)">You</div>
+    <p>what's the status on the auth refactor?</p>
+  </div>
+
+  <div class="card card-assistant">
+    <div class="card-label" style="color:var(--accent-rose)">Mikki</div>
+    <p>Done. Pushed to the branch 20 minutes ago. Token refresh was racing with the session check — fixed it with a queue.</p>
+  </div>
+
+  <div class="card card-assistant">
+    <div class="card-label" style="color:var(--accent-rose)">Mikki</div>
+    <p>Want me to walk you through the changes?</p>
+  </div>
+
+  <div class="card card-user">
+    <div class="card-label" style="color:var(--accent-gold)">You</div>
+    <p>walk me through what you changed</p>
+  </div>
+
+  <div class="card card-assistant-long">
+    <div class="card-label" style="color:var(--accent-rose)">Mikki</div>
+    <p>The core problem was a race condition between the token refresh cycle and the session validation middleware. When a user's access token expired, two things happened simultaneously: the refresh interceptor fired off a request to <code>/auth/refresh</code>, and the session check middleware tried to validate the now-expired token. About 15% of the time, the session check would fail before the refresh completed, killing the session entirely.</p>
+    <br>
+    <p>The fix is a promise-based queue. I added a <code>RefreshQueue</code> class in <code>src/auth/refresh.ts</code> that acts as a gatekeeper. When the first request detects an expired token, it acquires the lock and starts the refresh. Every subsequent request that hits the expired token during that window just awaits the same promise. Once the refresh resolves, all queued requests replay with the new token.</p>
+    <br>
+    <p>The session middleware now checks the queue state before validating. If a refresh is in-flight, it waits for resolution rather than immediately rejecting. This required moving session validation into an async wrapper so it can yield without blocking the request pipeline.</p>
+    <br>
+    <p>I also added a <code>maxRetries</code> config (defaulting to 2) so we don't loop forever if the refresh token itself is expired. After max retries, it clears the session cleanly and redirects to login with a <code>reason=session_expired</code> param so the UI can show the right message.</p>
+    <br>
+    <p>The migration is minimal: one new column on the sessions table (<code>refresh_lock_id</code>) for distributed environments where multiple server instances need to coordinate refreshes.</p>
+  </div>
+
+  <details class="card card-work">
+    <summary>✓ Ran build · 4.2s</summary>
+    <pre>$ pnpm build
+✓ Compiled successfully in 4.2s
+✓ 47 modules transformed
+✓ dist/index.js     12.4 kB │ gzip: 4.1 kB
+✓ dist/auth.js       3.8 kB │ gzip: 1.6 kB</pre>
+  </details>
+
+  <details class="card card-work">
+    <summary>Edited src/auth/refresh.ts</summary>
+    <pre><span class="diff-add">+ export class RefreshQueue {
++   private pending: Promise&lt;Token&gt; | null = null;
++   private retries = 0;
++
++   async acquire(refreshFn: () =&gt; Promise&lt;Token&gt;) {
++     if (this.pending) return this.pending;
++     this.pending = refreshFn().finally(() =&gt; {
++       this.pending = null;
++     });
++     return this.pending;
++   }
++ }</span></pre>
+  </details>
+
+  <div class="card card-assistant">
+    <div class="card-label" style="color:var(--accent-rose)">Mikki</div>
+    <p>All tests pass. Want me to open the PR?</p>
+  </div>
+
+  <div class="card card-user">
+    <div class="card-label" style="color:var(--accent-gold)">You</div>
+    <p>yes, include the migration notes</p>
+  </div>
+
+  <details class="card card-work">
+    <summary>Created PR #47 — Fix token refresh race condition</summary>
+    <pre>PR #47: Fix token refresh race condition
+
+- Add RefreshQueue class for promise-based locking
+- Update session middleware to await pending refreshes
+- Add refresh_lock_id migration for distributed envs
+- Add maxRetries config (default: 2)
+
+Migration: npx prisma migrate deploy</pre>
+  </details>
+
+</div>
+
+<div class="input-area">
+  <div class="input-card">
+    <textarea class="gallery-input" rows="1" placeholder="speak…" id="input"></textarea>
+  </div>
+</div>
+
+<div class="exhibit-strip">
+  <span><span class="exhibit-dot r"></span>Forge — Building settings page</span>
+  <span><span class="exhibit-dot a"></span>Bastion — Security scan</span>
+  <span><span class="exhibit-dot b"></span>Alma — Reviewing layout</span>
+</div>
+
+<script>
+const input = document.getElementById('input');
+input.addEventListener('input', () => { input.style.height = 'auto'; input.style.height = input.scrollHeight + 'px'; });
+input.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    if (input.value.trim()) {
+      const gallery = document.getElementById('gallery');
+      const card = document.createElement('div');
+      card.className = 'card card-user';
+      card.innerHTML = `<div class="card-label" style="color:var(--accent-gold)">You</div><p>${input.value.replace(/</g,'&lt;')}</p>`;
+      gallery.appendChild(card);
+      input.value='';input.style.height='auto';
+      window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});
+    }
+  }
+});
+</script>
+</body>
+</html>
