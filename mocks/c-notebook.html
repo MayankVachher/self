@@ -1,0 +1,158 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lume — Notebook</title>
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Recursive:wght,CASL,MONO@400,0.5,1&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg-deep:#1a1410;--bg-surface:#231e18;--bg-elevated:#2e2720;--text-primary:#f5f0e8;--text-secondary:#c4b8a8;--text-muted:#9a8e80;--accent-rose:#c4867a;--accent-gold:#c4a24e;--border:#3a322a}
+html,body{height:100%;background:var(--bg-deep);color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.6}50%{opacity:1}}
+#app{display:flex;height:100vh}
+#sidebar{width:280px;border-right:1px solid var(--border);background:var(--bg-surface);display:flex;flex-direction:column;flex-shrink:0}
+#sidebar h2{font-family:'Cabinet Grotesk',sans-serif;font-size:16px;padding:16px 16px 12px;font-weight:700;color:var(--accent-rose)}
+#thread-list{flex:1;overflow-y:auto}
+.thread{padding:12px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s}
+.thread:hover,.thread.active{background:var(--bg-elevated)}
+.thread .t-top{display:flex;align-items:center;gap:8px}
+.thread .t-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.thread .t-dot.green{background:#6bc46b}.thread .t-dot.amber{background:var(--accent-gold)}.thread .t-dot.blue{background:#5b9bd5}
+.thread .t-title{font-weight:600;font-size:14px;flex:1;font-family:'Cabinet Grotesk',sans-serif}
+.thread .t-time{font-size:11px;color:var(--text-muted);font-family:'Recursive',monospace}
+.thread .t-preview{font-size:12px;color:var(--text-muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#main{flex:1;display:flex;flex-direction:column}
+#thread-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+#thread-header .th-dot{width:10px;height:10px;border-radius:50%}
+#thread-header h3{font-family:'Cabinet Grotesk',sans-serif;font-size:16px;font-weight:700}
+#thread-msgs{flex:1;overflow-y:auto;padding:16px 20px}
+#thread-msgs::-webkit-scrollbar{width:5px}
+#thread-msgs::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.msg{margin-bottom:14px;animation:fadeUp .3s ease}
+.msg.user{display:flex;justify-content:flex-end}
+.msg.user .bubble{background:var(--bg-elevated);border:1px solid var(--border);padding:8px 14px;border-radius:12px 12px 2px 12px;max-width:70%;font-size:14px}
+.msg.assistant .name{color:var(--accent-rose);font-weight:600;font-size:12px;margin-bottom:3px;font-family:'Cabinet Grotesk',sans-serif}
+.msg.assistant .body{color:var(--text-secondary);line-height:1.6;font-size:14px}
+.msg.system{text-align:center;font-size:12px;color:var(--text-muted);padding:6px 0}
+.away-pin{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:14px;font-size:13px;color:var(--text-secondary)}
+.away-pin strong{color:var(--accent-gold);font-family:'Cabinet Grotesk',sans-serif}
+.work-card{background:var(--bg-surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin:8px 0}
+.work-card .wc-top{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.work-card .wc-icon{width:22px;height:22px;border-radius:6px;background:var(--accent-rose);display:flex;align-items:center;justify-content:center;font-size:11px}
+.work-card .wc-title{font-family:'Cabinet Grotesk',sans-serif;font-weight:600;font-size:13px;flex:1}
+.work-card .wc-status{font-size:11px;color:var(--text-muted);font-family:'Recursive',monospace}
+.work-card .wc-log{font-family:'Recursive',monospace;font-size:11px;color:var(--text-muted);line-height:1.7}
+.work-card .wc-log div{animation:fadeUp .2s ease}
+.work-card.active .wc-icon{animation:pulse 1.5s infinite}
+.work-card.done{border-color:rgba(107,196,107,.2)}.work-card.done .wc-icon{background:#6bc46b}
+#input-area{border-top:1px solid var(--border);padding:10px 16px;display:flex;gap:8px;align-items:flex-end}
+#input-area .thread-ctx{font-size:11px;color:var(--text-muted);position:absolute;top:-18px;left:0}
+#input-wrap{flex:1;position:relative}
+#input-area textarea{width:100%;background:var(--bg-deep);border:1px solid var(--border);border-radius:10px;color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;padding:10px 14px;resize:none;outline:none;min-height:40px;max-height:100px}
+#input-area button{background:var(--accent-rose);border:none;border-radius:10px;color:var(--bg-deep);font-weight:600;padding:10px 16px;cursor:pointer;font-size:14px}
+</style></head><body>
+<div id="app">
+<div id="sidebar">
+<h2>Threads</h2>
+<div id="thread-list"></div>
+</div>
+<div id="main">
+<div id="thread-header"><div class="th-dot" id="th-dot" style="background:var(--accent-gold)"></div><h3 id="th-title">General</h3></div>
+<div id="thread-msgs"></div>
+<div id="input-area">
+<div id="input-wrap"><textarea id="inp" rows="1" placeholder="Message in #General..."></textarea></div>
+<button id="send">Send</button>
+</div>
+</div>
+</div>
+<script>
+const threads=[
+  {id:'general',title:'General',dot:'amber',preview:'what\'s the status on everything?',time:'now',msgs:[]},
+  {id:'pin',title:'PIN Auth',dot:'green',preview:'PR #7 merged ✓',time:'8h ago',msgs:[]},
+  {id:'image',title:'Image Upload',dot:'amber',preview:'Pending review',time:'2h ago',msgs:[]},
+  {id:'room',title:'Room Redesign',dot:'amber',preview:'Waiting on Alma\'s fixes',time:'1d ago',msgs:[]},
+  {id:'audit',title:'Daily Audit',dot:'blue',preview:'Passed ✓',time:'6h ago',msgs:[]}
+];
+let currentThread='general',demoStep=0,demoLock=false;
+const threadListEl=document.getElementById('thread-list'),msgEl=document.getElementById('thread-msgs'),inp=document.getElementById('inp'),thTitle=document.getElementById('th-title'),thDot=document.getElementById('th-dot');
+
+function renderThreadList(){
+  threadListEl.innerHTML='';
+  threads.forEach(t=>{
+    const d=document.createElement('div');d.className='thread'+(t.id===currentThread?' active':'');
+    d.innerHTML=`<div class="t-top"><span class="t-dot ${t.dot}"></span><span class="t-title">${t.title}</span><span class="t-time">${t.time}</span></div><div class="t-preview">${t.preview}</div>`;
+    d.onclick=()=>switchThread(t.id);threadListEl.appendChild(d);
+  });
+}
+function switchThread(id){currentThread=id;const t=threads.find(x=>x.id===id);thTitle.textContent=t.title;thDot.style.background=t.dot==='green'?'#6bc46b':t.dot==='blue'?'#5b9bd5':'var(--accent-gold)';inp.placeholder=`Message in #${t.title}...`;renderThreadList();msgEl.innerHTML='';t.msgs.forEach(m=>msgEl.appendChild(m))}
+function scroll(){msgEl.scrollTop=msgEl.scrollHeight}
+
+function addUser(text,tid){
+  const d=document.createElement('div');d.className='msg user';d.innerHTML=`<div class="bubble">${text}</div>`;
+  const t=threads.find(x=>x.id===(tid||currentThread));t.msgs.push(d);
+  if((tid||currentThread)===currentThread){msgEl.appendChild(d);scroll()}
+  t.preview=text;t.time='now';renderThreadList();
+}
+function streamAssistant(text,tid,cb){
+  const d=document.createElement('div');d.className='msg assistant';d.innerHTML=`<div class="name">Mikki</div><div class="body"></div>`;
+  const t=threads.find(x=>x.id===(tid||currentThread));t.msgs.push(d);
+  if((tid||currentThread)===currentThread){msgEl.appendChild(d)}
+  const body=d.querySelector('.body');let i=0;
+  const iv=setInterval(()=>{if(i<text.length){body.textContent+=text[i];i++;if((tid||currentThread)===currentThread)scroll()}else{clearInterval(iv);t.preview=text.slice(0,40)+'...';renderThreadList();cb&&cb()}},25);
+}
+function addSystemMsg(text,tid){
+  const d=document.createElement('div');d.className='msg system';d.textContent=text;
+  const t=threads.find(x=>x.id===(tid||currentThread));t.msgs.push(d);
+  if((tid||currentThread)===currentThread){msgEl.appendChild(d);scroll()}
+}
+function addWorkCard(tid){
+  const t=threads.find(x=>x.id===(tid||currentThread));
+  const d=document.createElement('div');d.className='work-card active';
+  d.innerHTML=`<div class="wc-top"><div class="wc-icon">⚒</div><div class="wc-title">Forge — fixing image upload PR</div><div class="wc-status">working...</div></div><div class="wc-log"></div>`;
+  t.msgs.push(d);if((tid||currentThread)===currentThread){msgEl.appendChild(d);scroll()}
+  const log=d.querySelector('.wc-log'),status=d.querySelector('.wc-status');
+  const steps=['Reading files...','Fixing send button gating...','Fixing TypeScript error...','Running type check...','Committing changes...'];
+  let si=0;
+  const iv=setInterval(()=>{
+    if(si<steps.length){const l=document.createElement('div');l.textContent='> '+steps[si];log.appendChild(l);status.textContent=steps[si];si++;if((tid||currentThread)===currentThread)scroll()}
+    else{clearInterval(iv);d.classList.remove('active');d.classList.add('done');status.textContent='complete';
+      const l=document.createElement('div');l.style.color='#6bc46b';l.textContent='✓ Done. Fixed send button gating and TS compilation error. Ready for review.';log.appendChild(l);
+      const img=threads.find(x=>x.id==='image');img.dot='green';img.preview='Fixed — ready for review';renderThreadList();
+      if((tid||currentThread)===currentThread)scroll();
+      setTimeout(()=>{addSystemMsg('🔔 Bastion\'s daily audit complete. 1 finding: 17 pending system updates.','general');demoLock=false},2000);
+    }
+  },1500);
+}
+
+function handleSend(){
+  const text=inp.value.trim();if(!text)return;inp.value='';
+  addUser(text);
+  if(demoStep===0&&/status|everything/i.test(text)){demoStep=1;demoLock=true;
+    setTimeout(()=>streamAssistant('PIN auth shipped ✅. Room prototype waiting on Alma\'s fixes. Image upload PR pending — has a gating bug. Chaos testing running.','general',()=>{demoLock=false}),400);
+  }else if(demoStep===1&&/fix.*image|image.*fix/i.test(text)){demoStep=2;demoLock=true;
+    setTimeout(()=>streamAssistant('On it. I\'ll track this in the Image Upload thread. Spawning Forge...','general',()=>{
+      setTimeout(()=>{switchThread('image');addWorkCard('image')},800);
+    }),400);
+  }else if(!demoLock){setTimeout(()=>streamAssistant('(Demo mode — try "what\'s the status on everything?" or "fix the image upload PR")'),300)}
+}
+
+document.getElementById('send').onclick=handleSend;
+inp.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();handleSend()}});
+
+renderThreadList();
+
+// Auto-play
+setTimeout(()=>{
+  const aw=document.createElement('div');aw.className='away-pin';aw.innerHTML='<strong>While you were away:</strong> Bastion\'s audit passed ✓, Forge finished PIN auth (PR #7 merged), 2 new emails arrived.';
+  threads.find(x=>x.id==='general').msgs.push(aw);msgEl.appendChild(aw);
+  setTimeout(()=>{
+    addUser('what\'s the status on everything?','general');demoLock=true;
+    setTimeout(()=>{demoStep=1;streamAssistant('PIN auth shipped ✅. Room prototype waiting on Alma\'s fixes. Image upload PR pending — has a gating bug. Chaos testing running.','general',()=>{demoLock=false;
+      setTimeout(()=>{addUser('fix the image upload PR','general');demoStep=2;demoLock=true;
+        setTimeout(()=>streamAssistant('On it. I\'ll track this in the Image Upload thread. Spawning Forge...','general',()=>{
+          setTimeout(()=>{switchThread('image');addWorkCard('image')},800);
+        }),400);
+      },2000);
+    })},600);
+  },1500);
+},2000);
+</script></body></html>
