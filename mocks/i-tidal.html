@@ -1,0 +1,180 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lume · Tidal</title>
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@500,700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Recursive:wght,CASL,MONO@400,0.5,1&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg-deep:#1a1410;--bg-surface:#231e18;--bg-elevated:#2e2720;--text-primary:#f5f0e8;--text-secondary:#c4b8a8;--text-muted:#9a8e80;--accent-rose:#c4867a;--accent-gold:#c4a24e;--border:#3a322a}
+html,body{height:100%;overflow:hidden;background:var(--bg-deep);color:var(--text-primary);font-family:'Plus Jakarta Sans',sans-serif}
+h1,h2,h3{font-family:'Cabinet Grotesk',sans-serif}
+
+.tidal{display:flex;flex-direction:column;height:100vh}
+
+/* Now bar */
+.now-bar{background:var(--bg-surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;gap:14px;flex-shrink:0}
+.now-blob{width:10px;height:10px;border-radius:50%;background:var(--accent-rose);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.now-bar .name{font-size:.85rem;font-weight:600}
+.now-bar .status{font-size:.75rem;color:var(--text-muted)}
+.now-agents{margin-left:auto;display:flex;gap:8px}
+.now-agent{font-size:.7rem;padding:3px 10px;background:var(--bg-elevated);border-radius:12px;color:var(--text-secondary);cursor:pointer}
+.now-agent:hover{color:var(--text-primary)}
+.now-agent.done{opacity:.6}
+
+/* Filters */
+.filters{padding:8px 20px;display:flex;gap:6px;flex-shrink:0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.filter-pill{font-size:.72rem;padding:4px 12px;border-radius:14px;border:1px solid var(--border);background:transparent;color:var(--text-muted);cursor:pointer;transition:all .2s}
+.filter-pill:hover{border-color:var(--text-secondary)}
+.filter-pill.active{background:var(--bg-elevated);border-color:var(--accent-gold);color:var(--text-primary)}
+.filter-pill .fpill-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px}
+
+/* Timeline */
+.timeline{flex:1;overflow-y:auto;padding:0 20px 100px}
+.time-block{margin-top:20px}
+.time-label{font-size:.7rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.tl-item{display:flex;gap:10px;margin-bottom:12px;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.tl-tag{flex-shrink:0;font-size:.65rem;padding:2px 8px;border-radius:8px;border:1px solid var(--border);cursor:pointer;white-space:nowrap;margin-top:2px}
+.tl-tag.main{color:var(--accent-gold);border-color:var(--accent-gold)}
+.tl-tag.room{color:var(--accent-rose);border-color:var(--accent-rose)}
+.tl-tag.agent{color:var(--text-muted);border-color:var(--border);background:var(--bg-elevated)}
+.tl-content{flex:1;min-width:0}
+.tl-content .speaker{font-size:.78rem;font-weight:600;margin-bottom:2px}
+.tl-content .speaker.mikki{color:var(--accent-rose)}
+.tl-content .speaker.you{color:var(--accent-gold)}
+.tl-content .text{font-size:.85rem;color:var(--text-secondary);line-height:1.5}
+.tl-content .agent-output{font-family:'Recursive',monospace;font-size:.72rem;color:var(--text-muted);line-height:1.5;white-space:pre-wrap;max-height:60px;overflow:hidden;cursor:pointer;transition:max-height .3s}
+.tl-content .agent-output.expanded{max-height:400px}
+.tl-content .event-text{font-size:.8rem;color:var(--text-muted);font-style:italic}
+.tl-time{font-size:.65rem;color:var(--text-muted);flex-shrink:0;margin-top:3px;width:40px;text-align:right}
+
+/* Input */
+.input-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg-surface);border-top:1px solid var(--border);padding:12px 20px;z-index:5}
+.input-ctx{font-size:.72rem;color:var(--text-muted);margin-bottom:6px}
+.input-bar textarea{width:100%;background:var(--bg-elevated);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text-primary);font-family:inherit;font-size:.85rem;resize:none;outline:none;height:44px}
+.input-bar textarea:focus{border-color:var(--accent-gold)}
+
+.hidden{display:none!important}
+</style>
+</head><body>
+<div class="tidal">
+  <div class="now-bar">
+    <div class="now-blob"></div>
+    <span class="name">Mikki</span>
+    <span class="status">Active</span>
+    <div class="now-agents" id="nowAgents">
+      <span class="now-agent" id="naForge">⚡ Forge · 3m</span>
+      <span class="now-agent" id="naBastion">⚡ Bastion · 1m</span>
+    </div>
+  </div>
+  <div class="filters" id="filters">
+    <div class="filter-pill active" onclick="toggleFilter('all')">All</div>
+    <div class="filter-pill" data-filter="main" onclick="toggleFilter('main')"><span class="fpill-dot" style="background:var(--accent-gold)"></span>Main</div>
+    <div class="filter-pill" data-filter="room" onclick="toggleFilter('room')"><span class="fpill-dot" style="background:var(--accent-rose)"></span>Room Redesign</div>
+    <div class="filter-pill" data-filter="agent" onclick="toggleFilter('agent')"><span class="fpill-dot" style="background:var(--text-muted)"></span>Agents</div>
+  </div>
+  <div class="timeline" id="timeline"></div>
+</div>
+<div class="input-bar">
+  <div class="input-ctx" id="inputCtx">Talking in: Main</div>
+  <textarea id="msgInput" placeholder="Reply..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();send()}"></textarea>
+</div>
+
+<script>
+let activeFilter='all',demoPhase=0;
+const items=[
+  {time:'4:50p',tag:'agent',tagLabel:'Bastion',type:'event',text:'Starting daily audit...'},
+  {time:'4:51p',tag:'agent',tagLabel:'Forge',type:'event',text:'Fixing playground layout — checking out branch'},
+  {time:'4:52p',tag:'main',tagLabel:'Main',type:'msg',s:'mikki',text:'PIN auth shipped. PRs merged and deployed. ✅'},
+  {time:'4:52p',tag:'room',tagLabel:'Room',type:'msg',s:'mikki',text:'Alma rated the prototype 4/5. 24 fixes queued.'},
+];
+const earlierItems=[
+  {time:'3:20p',tag:'main',tagLabel:'Main',type:'msg',s:'you',text:'How\'s the PIN auth going?'},
+  {time:'3:22p',tag:'main',tagLabel:'Main',type:'msg',s:'mikki',text:'Almost done. Running final tests now. Should be deployed within the hour.'},
+  {time:'2:40p',tag:'room',tagLabel:'Room',type:'msg',s:'mikki',text:'I\'ve been working on the room redesign with Alma.'},
+  {time:'2:45p',tag:'room',tagLabel:'Room',type:'msg',s:'you',text:'Nice. What are the top fixes?'},
+  {time:'2:46p',tag:'room',tagLabel:'Room',type:'msg',s:'mikki',text:'Mostly spacing, color contrast on mobile, nav animation. Font loading flagged as biggest perf hit.'},
+];
+
+function render(){
+  const tl=document.getElementById('timeline');
+  let html='<div class="time-block"><div class="time-label">Now</div>';
+  const nowItems=items.filter(i=>activeFilter==='all'||i.tag===activeFilter);
+  nowItems.forEach(i=>{html+=renderItem(i)});
+  html+='</div>';
+  const eItems=earlierItems.filter(i=>activeFilter==='all'||i.tag===activeFilter);
+  if(eItems.length){
+    html+='<div class="time-block"><div class="time-label">Earlier today</div>';
+    eItems.forEach(i=>{html+=renderItem(i)});
+    html+='</div>';
+  }
+  tl.innerHTML=html;
+  tl.scrollTop=tl.scrollHeight;
+}
+function renderItem(i){
+  let content='';
+  if(i.type==='msg'){
+    content=`<div class="speaker ${i.s}">${i.s==='mikki'?'Mikki':'You'}</div><div class="text">${i.text}</div>`;
+  }else if(i.type==='event'){
+    content=`<div class="event-text">${i.text}</div>`;
+  }else if(i.type==='agent-output'){
+    content=`<div class="event-text">${i.label}</div><div class="agent-output" onclick="this.classList.toggle('expanded')">${i.text}</div>`;
+  }
+  const tagClass=i.tag==='main'?'main':i.tag==='room'?'room':'agent';
+  return `<div class="tl-item" data-tag="${i.tag}"><div class="tl-tag ${tagClass}" onclick="toggleFilter('${i.tag}')">${i.tagLabel}</div><div class="tl-content">${content}</div><div class="tl-time">${i.time}</div></div>`;
+}
+function toggleFilter(f){
+  if(f===activeFilter)f='all';
+  activeFilter=f;
+  document.querySelectorAll('.filter-pill').forEach(p=>{
+    p.classList.remove('active');
+    if(f==='all'&&!p.dataset.filter)p.classList.add('active');
+    if(p.dataset.filter===f)p.classList.add('active');
+  });
+  document.getElementById('inputCtx').textContent='Talking in: '+(f==='room'?'Room Redesign':'Main');
+  render();
+}
+function addItem(item){items.push(item);render();}
+function streamItem(item,cb){
+  const full=item.text;item.text='';items.push(item);
+  const idx=items.length-1;let i=0;
+  const iv=setInterval(()=>{if(i<full.length){items[idx].text+=full[i];i++;render();}else{clearInterval(iv);if(cb)cb();}},30);
+}
+function send(){
+  const inp=document.getElementById('msgInput'),t=inp.value.trim();if(!t)return;inp.value='';
+  const thread=activeFilter==='room'?'room':'main';
+  const label=thread==='room'?'Room':'Main';
+  addItem({time:'now',tag:thread,tagLabel:label,type:'msg',s:'you',text:t});
+  if(demoPhase===0){demoPhase=1;runStep5();}
+  else if(demoPhase===2){demoPhase=3;runStep9();}
+}
+
+function runStep5(){
+  const resp="Let me check what's queued up. Top priorities:\n\n1. Image upload PR — race condition flagged\n2. Room redesign fixes — 24 items from Alma\n3. Playground layout almost done (Forge on it)\n\nI'd suggest the image upload PR next — it's blocking release.";
+  streamItem({time:'now',tag:'main',tagLabel:'Main',type:'msg',s:'mikki',text:resp},()=>{demoPhase=2;});
+  setTimeout(()=>{
+    addItem({time:'now',tag:'agent',tagLabel:'Bastion',type:'agent-output',label:'Daily audit complete. 1 finding.',text:"Checking dependencies... ok\nScanning exports... 2 unused\nBundle: 142kb ✓\nError rates: 0.02%\nSSL: valid, 48 days\nAudit complete. 1 finding: unused exports in utils/legacy.ts"});
+    document.getElementById('naBastion').classList.add('done');
+    document.getElementById('naBastion').textContent='✓ Bastion';
+  },3000);
+}
+function runStep9(){
+  streamItem({time:'now',tag:'main',tagLabel:'Main',type:'msg',s:'mikki',text:'On it. Spawning Forge...'},()=>{
+    const na=document.createElement('span');na.className='now-agent';na.id='naForge2';na.textContent='⚡ Forge · 0s';
+    document.getElementById('nowAgents').appendChild(na);
+    addItem({time:'now',tag:'agent',tagLabel:'Forge',type:'event',text:'Spawned: fixing image upload PR'});
+    const lines=['$ checking out fix/image-upload','Reading PR diff... 14 files','Analyzing upload handler...','Found race condition','Fixing async/await chain...','Adding size validation...','Tests: 8/8 passed','Build done. Committed: fix(upload)'];
+    let s=0;
+    const iv=setInterval(()=>{
+      s++;na.textContent='⚡ Forge · '+s+'s';
+      if(s<=lines.length)addItem({time:'now',tag:'agent',tagLabel:'Forge',type:'event',text:lines[s-1]});
+      if(s>=8){clearInterval(iv);na.classList.add('done');na.textContent='✓ Forge';
+        addItem({time:'now',tag:'agent',tagLabel:'Forge',type:'event',text:'✓ Image upload PR fixed and committed.'});}
+    },1000);
+  });
+}
+
+render();
+setTimeout(()=>{document.getElementById('msgInput').value='what should we tackle next?';setTimeout(()=>send(),600);},2000);
+</script>
+</body></html>
