@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: MayankVachher/.github/.github/workflows/static-ci.yml@main
+
+  release:
+    name: Release for Pi
+    needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+        with:
+          go-version: "1.25"
+
+      - name: Build arm64 binary
+        run: |
+          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -o self-linux-arm64 .
+          sha256sum self-linux-arm64 > SHA256SUMS
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="v$(date -u +%Y.%m.%d)-${GITHUB_SHA::7}"
+          gh release create "$tag" self-linux-arm64 SHA256SUMS \
+            --title "$tag" \
+            --notes "Automated release from ${GITHUB_SHA::7}" \
+            --latest
